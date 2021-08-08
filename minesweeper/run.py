@@ -1,12 +1,12 @@
 """
 Runs interactive minesweeper game in standard out
 """
+from minesweeper.cursor import *
+from minesweeper.game import Minesweeper, INDENT, WON, LOST
+from minesweeper.read import controls, Keys
 
-if __name__ == '__main__':
-    from game import *
-    from read import *
-    from cursor import *
 
+def main():
     # creates an instance of the game and prints the board
     game = Minesweeper()
     game.print_board()
@@ -25,7 +25,6 @@ if __name__ == '__main__':
         """
         return 0 <= x + i < game.size and 0 <= y + j < game.size
 
-
     def cursor_bottom_left():
         """
         Moves cursor to bottom left of the board
@@ -33,14 +32,12 @@ if __name__ == '__main__':
         cursor_down(1 + game.size - y)
         cursor_left(INDENT + (x * 2))
 
-
     def cursor_reset_original():
         """
         Moves cursor to the middle
         """
         cursor_right(INDENT + (x * 2))
         cursor_up(1 + game.size - y)
-
 
     def refresh_board(game_lost=False):
         """
@@ -63,23 +60,23 @@ if __name__ == '__main__':
 
     try:
         for key in controls():
-            if key == KEY_W:
+            if key == Keys.W:
                 if is_valid_cursor(j=-1):
                     cursor_up(1)
                     y -= 1
-            elif key == KEY_A:
+            elif key == Keys.A:
                 if is_valid_cursor(i=-1):
                     cursor_left(2)
                     x -= 1
-            elif key == KEY_S:
+            elif key == Keys.S:
                 if is_valid_cursor(j=1):
                     cursor_down(1)
                     y += 1
-            elif key == KEY_D:
+            elif key == Keys.D:
                 if is_valid_cursor(i=1):
                     cursor_right(2)
                     x += 1
-            elif key == ENTER:
+            elif key == Keys.ENTER:
                 result = game.uncover_square(x, y)
                 is_lost = result == LOST
                 refresh_board(game_lost=is_lost)
@@ -91,10 +88,10 @@ if __name__ == '__main__':
                     cursor_bottom_left()
                     print('Congratulations, you won! :)')
                     break
-            elif key == SPACE:
+            elif key == Keys.SPACE:
                 game.mark_square(x, y)
                 refresh_board()
-            elif key == BACKSPACE:
+            elif key == Keys.BACKSPACE:
                 cursor_bottom_left()
                 print('Exiting minesweeper.')
                 break
@@ -103,3 +100,7 @@ if __name__ == '__main__':
         # caught exception if CTRL-C is called
         cursor_bottom_left()
         print('Exiting minesweeper.')
+
+
+if __name__ == '__main__':
+    main()

@@ -38,19 +38,19 @@ class Minesweeper:
         :param size: The horizontal and vertical length of the board to create
         :param mines: The number of mines that should be present on the board
         """
+        # the board size
         self._size = size
-        self._mine_count = 0
-        self._board = np.zeros(shape=(size, size))
-        self._visible = np.zeros(shape=(size, size))
 
-        # random values to set as the mines on the board
-        mines_nums = np.random.default_rng().choice(size * size, size=mines, replace=False)
+        # the real mine count and player's marked mine count
+        self._mine_count = mines
+        self._player_mine_count = 0
 
-        # builds the board
-        for num in mines_nums:
-            i, j = divmod(num, size)
-            self._board[i, j] = -1
-            self._find_neighbors(self._update_board, i, j)
+        # True for the player's first move
+        self._first_move = True
+
+        # holds the game board data and if it is visible or not
+        self._board = np.zeros(shape=(self.size, self.size))
+        self._visible = np.zeros(shape=(self.size, self.size))
 
     @property
     def size(self):
@@ -68,7 +68,28 @@ class Minesweeper:
 
         :return: the number of mines that have been marked by the player
         """
-        return self._mine_count
+        return self._player_mine_count
+
+    def _generate_board(self, x, y):
+        """
+        Generates the board data and ensures that the player will never lose on the first move
+
+        :param x: x coordinate point of the first move
+        :param y: y coordinate point of the first move
+        """
+        value = (x * self.size) + y
+
+        while True:
+            # random values to set as the mines on the board
+            mines_nums = np.random.default_rng().choice(self.size * self.size, size=self._mine_count, replace=False)
+            if value not in mines_nums:
+                break
+
+        # builds the board
+        for num in mines_nums:
+            i, j = divmod(num, self.size)
+            self._board[i, j] = -1
+            self._find_neighbors(self._update_board, i, j)
 
     def _is_valid_point(self, x, y):
         """
@@ -164,6 +185,10 @@ class Minesweeper:
         :param y: y coordinate point
         :return: Returns a string representing if the game is 'in_progress', 'lost', or 'won' after this move
         """
+        if self._first_move:
+            self._generate_board(x, y)
+            self._first_move = False
+
         if 2 <= self._visible[x, y] < 3:
             return IN_PROGRESS
         elif self._board[x, y] == -1:
@@ -183,11 +208,11 @@ class Minesweeper:
         if self._visible[x, y] == 0:
             # convert from hidden to flag
             self._visible[x, y] = 2
-            self._mine_count += 1
+            self._player_mine_count += 1
         elif self._visible[x, y] == 2:
             # convert from flag to question mark
             self._visible[x, y] = 3
-            self._mine_count -= 1
+            self._player_mine_count -= 1
         elif self._visible[x, y] == 3:
             # convert from question mark to hidden
             self._visible[x, y] = 0

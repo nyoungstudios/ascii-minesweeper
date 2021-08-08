@@ -12,16 +12,18 @@ LEFT = [27, 91, 68]
 RIGHT = [27, 91, 67]
 DELETE_SEQ = [27, 91, 51, 126]
 
-# constant identifiers for game controls
-KEY_W = 'w'
-KEY_A = 'a'
-KEY_S = 's'
-KEY_D = 'd'
-ENTER = 'enter'
-SPACE = 'space'
-BACKSPACE = 'backspace'
-DELETE = 'delete'
-WASD = {KEY_W, KEY_A, KEY_S, KEY_D}
+
+class Keys:
+    # constant identifiers for game controls
+    W = 'w'
+    A = 'a'
+    S = 's'
+    D = 'd'
+    ENTER = 'enter'
+    SPACE = 'space'
+    BACKSPACE = 'backspace'
+    DELETE = 'delete'
+    WASD = {W, A, S, D}
 
 
 def get_char():
@@ -91,21 +93,21 @@ def controls():
         i = ord(ch)
         ascii_arr.append(i)
         ascii_arr = ascii_arr[-4:]
-        if ch in WASD:
+        if ch in Keys.WASD:
             yield ch
         elif i == 10:
-            yield ENTER
+            yield Keys.ENTER
         elif i == 32:
-            yield SPACE
+            yield Keys.SPACE
         elif i == 127:
-            yield BACKSPACE
+            yield Keys.BACKSPACE
         elif ascii_arr[-3:] == UP:
-            yield KEY_W
+            yield Keys.W
         elif ascii_arr[-3:] == DOWN:
-            yield KEY_S
+            yield Keys.S
         elif ascii_arr[-3:] == LEFT:
-            yield KEY_A
+            yield Keys.A
         elif ascii_arr[-3:] == RIGHT:
-            yield KEY_D
+            yield Keys.D
         elif ascii_arr == DELETE_SEQ:
-            yield DELETE
+            yield Keys.DELETE
