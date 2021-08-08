@@ -9,7 +9,7 @@ from minesweeper.read import controls, Keys
 def main():
     # creates an instance of the game and prints the board
     game = Minesweeper()
-    print(game.create_board())
+    print(game)
 
     # keeps track of the coordinate points of the cursor on the board
     x = 0
@@ -39,20 +39,13 @@ def main():
         cursor_right(game.indent + (x * 2))
         cursor_up(game.size - y)
 
-    def refresh_board(game_lost=False):
+    def refresh_board():
         """
         Reprints the board in the same location in standard out so that it looks like the board was updated in place
-
-        :param game_lost: True if we should print the game over board; False, otherwise
         """
         cursor_bottom_left()
         clear_last_lines(game.size)
-
-        if game_lost:
-            print(game.create_game_over_board())
-        else:
-            print(game.create_board())
-
+        print(game)
         cursor_reset_original()
 
     # moves cursor to top left of board
@@ -78,9 +71,8 @@ def main():
                     x += 1
             elif key == Keys.ENTER:
                 result = game.uncover_square(x, y)
-                is_lost = result == LOST
-                refresh_board(game_lost=is_lost)
-                if is_lost:
+                refresh_board()
+                if result == LOST:
                     cursor_bottom_left()
                     print('You lost! Game over :(')
                     break

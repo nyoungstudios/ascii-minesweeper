@@ -60,6 +60,9 @@ class Minesweeper:
         # True for the player's first move
         self._first_move = True
 
+        # stores the game status
+        self._status = IN_PROGRESS
+
         # holds the game board data and if it is visible or not
         self._board = np.zeros(shape=(self.size, self.size))
         self._visible = np.zeros(shape=(self.size, self.size))
@@ -211,12 +214,15 @@ class Minesweeper:
             self._first_move = False
 
         if 2 <= self._visible[x, y] < 3:
-            return IN_PROGRESS
+            # status is already in progress. Or in other words, it cannot be in progress after the game is over
+            pass
         elif self._board[x, y] == -1:
-            return LOST
+            self._status = LOST
         else:
             self._make_visible(x, y)
-            return self._check_game_status()
+            self._status = self._check_game_status()
+
+        return self._status
 
     def mark_square(self, x, y):
         """
@@ -324,3 +330,14 @@ class Minesweeper:
             return self._convert_board_to_char(self._board[i, j])
 
         return self._board_iterator(show_all)
+
+    def __str__(self):
+        """
+        Creates a formatted board based on the game status
+
+        :return: A string representing the board
+        """
+        if self._status == IN_PROGRESS:
+            return self.create_board()
+        else:
+            return self.create_game_over_board()
