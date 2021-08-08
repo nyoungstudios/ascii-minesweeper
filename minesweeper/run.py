@@ -2,9 +2,8 @@
 Runs interactive minesweeper game in standard out
 """
 from minesweeper.cursor import *
-from minesweeper.game import Minesweeper, INDENT, WON, LOST
+from minesweeper.game import Minesweeper, WON, LOST
 from minesweeper.read import controls, Keys
-
 
 def main():
     # creates an instance of the game and prints the board
@@ -30,13 +29,13 @@ def main():
         Moves cursor to bottom left of the board
         """
         cursor_down(1 + game.size - y)
-        cursor_left(INDENT + (x * 2))
+        cursor_left(game.indent + (x * 2))
 
     def cursor_reset_original():
         """
-        Moves cursor to the middle
+        Moves cursor it's original location after refreshing the board or the top left of the board on start
         """
-        cursor_right(INDENT + (x * 2))
+        cursor_right(game.indent + (x * 2))
         cursor_up(1 + game.size - y)
 
     def refresh_board(game_lost=False):

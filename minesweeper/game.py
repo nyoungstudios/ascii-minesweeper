@@ -4,14 +4,12 @@ Minesweeper game
 Logic/data structures for the minesweeper game
 """
 import numpy as np
+import os
 
 # minesweeper game statuses
 LOST = 'lost'
 WON = 'won'
 IN_PROGRESS = 'in_progress'
-
-# number of spaces from the left to indent the game board by
-INDENT = 8
 
 
 class Minesweeper:
@@ -31,12 +29,14 @@ class Minesweeper:
         (-1, -1)    # NW
     ]
 
-    def __init__(self, size=DEFAULT_SIZE, mines=DEFAULT_MINES):
+    def __init__(self, size=DEFAULT_SIZE, mines=DEFAULT_MINES, indent=None):
         """
         Initializes an instance of the Minesweeper game
 
         :param size: The horizontal and vertical length of the board to create
         :param mines: The number of mines that should be present on the board
+        :param indent: The number of spaces to indent the board on the left size. If None, will auto center the board
+            in the terminal
         """
         # the board size
         self._size = size
@@ -44,6 +44,14 @@ class Minesweeper:
         # the real mine count and player's marked mine count
         self._mine_count = mines
         self._player_mine_count = 0
+
+        # the number of spaces to indent
+        if isinstance(indent, int):
+            self._indent = indent
+        else:
+            # auto centers board in terminal
+            term_size = os.get_terminal_size()
+            self._indent = term_size.columns // 2 - size
 
         # True for the player's first move
         self._first_move = True
@@ -69,6 +77,15 @@ class Minesweeper:
         :return: the number of mines that have been marked by the player
         """
         return self._player_mine_count
+
+    @property
+    def indent(self):
+        """
+        Gets the number of spaces to indent on the left side of the board
+
+        :return: the number of spaces to indent on the left side of the board
+        """
+        return self._indent
 
     def _generate_board(self, x, y):
         """
@@ -229,7 +246,7 @@ class Minesweeper:
     def _print_board_iterator(self, fn):
         str_to_write = ''
         for j in range(self.size):
-            str_to_write += ' ' * INDENT
+            str_to_write += ' ' * self.indent
             for i in range(self.size):
                 str_to_write += fn(i, j) + ' '
 
