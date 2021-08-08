@@ -33,17 +33,25 @@ class Minesweeper:
     _SQUARE = u'\u25a0'
     _FLAG = u'\u2691'
 
-    def __init__(self, size=DEFAULT_SIZE, mines=DEFAULT_MINES, indent=None):
+    def __init__(self, height=DEFAULT_SIZE, width=DEFAULT_SIZE, size=None, mines=DEFAULT_MINES, indent=None):
         """
         Initializes an instance of the Minesweeper game
 
-        :param size: The horizontal and vertical length of the board to create
+        :param height: The vertical length of the board to create
+        :param width: The horizontal length of the board to create
+        :param size: The horizontal and vertical length of the board to create. If this is provided, it will override
+            height and width values
         :param mines: The number of mines that should be present on the board
         :param indent: The number of spaces to indent the board on the left size. If None, will auto center the board
             in the terminal
         """
         # the board size
-        self._size = size
+        if size:
+            self._height = size
+            self._width = size
+        else:
+            self._height = height
+            self._width = width
 
         # the real mine count and player's marked mine count
         self._mine_count = mines
@@ -55,7 +63,7 @@ class Minesweeper:
         else:
             # auto centers board in terminal
             term_size = os.get_terminal_size()
-            self._indent = term_size.columns // 2 - size
+            self._indent = term_size.columns // 2 - self.width
 
         # True for the player's first move
         self._first_move = True
@@ -64,17 +72,26 @@ class Minesweeper:
         self._status = IN_PROGRESS
 
         # holds the game board data and if it is visible or not
-        self._board = np.zeros(shape=(self.size, self.size))
-        self._visible = np.zeros(shape=(self.size, self.size))
+        self._board = np.zeros(shape=(self.width, self.height))
+        self._visible = np.zeros(shape=(self.width, self.height))
 
     @property
-    def size(self):
+    def height(self):
         """
-        Gets the size of the board
+        Gets the height of the board
 
-        :return: The size of the board
+        :return: The height of the board
         """
-        return self._size
+        return self._height
+
+    @property
+    def width(self):
+        """
+        Gets the width of the board
+
+        :return: The width of the board
+        """
+        return self._width
 
     @property
     def mines(self):
@@ -101,17 +118,17 @@ class Minesweeper:
         :param x: x coordinate point of the first move
         :param y: y coordinate point of the first move
         """
-        value = (x * self.size) + y
+        value = (x * self.width) + y
 
         while True:
             # random values to set as the mines on the board
-            mines_nums = np.random.default_rng().choice(self.size * self.size, size=self._mine_count, replace=False)
+            mines_nums = np.random.default_rng().choice(self.width * self.height, size=self._mine_count, replace=False)
             if value not in mines_nums:
                 break
 
         # builds the board
         for num in mines_nums:
-            i, j = divmod(num, self.size)
+            i, j = divmod(num, self.height)
             self._board[i, j] = -1
             self._find_neighbors(self._update_board, i, j)
 
@@ -123,7 +140,7 @@ class Minesweeper:
         :param y: y coordinate point
         :return: True if the coordinate point are is valid; otherwise, False
         """
-        return 0 <= x < self.size and 0 <= y < self.size
+        return 0 <= x < self.width and 0 <= y < self.height
 
     def _find_neighbors(self, fn, x, y, *args, **kwargs):
         """
@@ -265,15 +282,15 @@ class Minesweeper:
         :return: A string representing the board
         """
         str_to_write = ''
-        for j in range(self.size):
+        for j in range(self.height):
             str_to_write += ' ' * self.indent
-            for i in range(self.size):
+            for i in range(self.width):
                 str_to_write += fn(i, j)
 
-                if i + 1 != self.size:
+                if i + 1 != self.width:
                     str_to_write += ' '
 
-            if j + 1 != self.size:
+            if j + 1 != self.height:
                 str_to_write += '\n'
 
         return str_to_write

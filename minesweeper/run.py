@@ -23,13 +23,13 @@ def main():
         :param j: offset in the y direction
         :return: True if the offset is a valid cursor move; otherwise, False
         """
-        return 0 <= x + i < game.size and 0 <= y + j < game.size
+        return 0 <= x + i < game.width and 0 <= y + j < game.height
 
     def cursor_bottom_left():
         """
         Moves cursor to bottom left of the board
         """
-        cursor_down(game.size - y)
+        cursor_down(game.height - y)
         cursor_left(game.indent + (x * 2))
 
     def cursor_reset_original():
@@ -37,14 +37,14 @@ def main():
         Moves cursor it's original location after refreshing the board or the top left of the board on start
         """
         cursor_right(game.indent + (x * 2))
-        cursor_up(game.size - y)
+        cursor_up(game.height - y)
 
     def refresh_board():
         """
         Reprints the board in the same location in standard out so that it looks like the board was updated in place
         """
         cursor_bottom_left()
-        clear_last_lines(game.size)
+        clear_last_lines(game.height)
         print(game)
         cursor_reset_original()
 
