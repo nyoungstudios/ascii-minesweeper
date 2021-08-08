@@ -29,7 +29,7 @@ def main():
         """
         Moves cursor to bottom left of the board
         """
-        cursor_down(1 + game.size - y)
+        cursor_down(game.size - y)
         cursor_left(game.indent + (x * 2))
 
     def cursor_reset_original():
@@ -37,7 +37,7 @@ def main():
         Moves cursor it's original location after refreshing the board or the top left of the board on start
         """
         cursor_right(game.indent + (x * 2))
-        cursor_up(1 + game.size - y)
+        cursor_up(game.size - y)
 
     def refresh_board(game_lost=False):
         """
@@ -46,7 +46,7 @@ def main():
         :param game_lost: True if we should print the game over board; False, otherwise
         """
         cursor_bottom_left()
-        clear_last_lines(1 + game.size)
+        clear_last_lines(game.size)
 
         if game_lost:
             game.print_game_over_board()

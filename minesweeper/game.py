@@ -248,9 +248,13 @@ class Minesweeper:
         for j in range(self.size):
             str_to_write += ' ' * self.indent
             for i in range(self.size):
-                str_to_write += fn(i, j) + ' '
+                str_to_write += fn(i, j)
 
-            str_to_write += '\n'
+                if i + 1 != self.size:
+                    str_to_write += ' '
+
+            if j + 1 != self.size:
+                str_to_write += '\n'
 
         print(str_to_write)
 
