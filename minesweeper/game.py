@@ -182,7 +182,7 @@ class Minesweeper:
         :return: Returns a string representing if the game is 'in_progress', 'lost', or 'won' after this move
         """
         is_in_progress = False
-        for i, j in np.ndindex(self._visible.shape):
+        for i, j in np.ndindex(*self._visible.shape):
             if self._visible[i, j] == 1 and self._board[i, j] == -1:
                 return LOST
             elif self._visible[i, j] != 1 and self._board[i, j] != -1:

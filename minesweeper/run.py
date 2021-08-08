@@ -5,6 +5,7 @@ from minesweeper.cursor import *
 from minesweeper.game import Minesweeper, WON, LOST
 from minesweeper.read import controls, Keys
 
+
 def main():
     # creates an instance of the game and prints the board
     game = Minesweeper()
