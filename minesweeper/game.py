@@ -29,6 +29,10 @@ class Minesweeper:
         (-1, -1)    # NW
     ]
 
+    # unicode characters
+    _SQUARE = u'\u25a0'
+    _FLAG = u'\u2691'
+
     def __init__(self, size=DEFAULT_SIZE, mines=DEFAULT_MINES, indent=None):
         """
         Initializes an instance of the Minesweeper game
@@ -234,16 +238,26 @@ class Minesweeper:
             # convert from question mark to hidden
             self._visible[x, y] = 0
 
-    @staticmethod
-    def _convert_board_to_char(v):
+    def _convert_board_to_char(self, v):
         if v == 0:
-            return u'\u25a0'
+            # square if hidden
+            return self._SQUARE
         elif v == -1:
+            # asterisk if mine
             return '*'
         else:
+            # number of neighboring mines otherwise
             return str(int(v))
 
-    def _print_board_iterator(self, fn):
+    def _board_iterator(self, fn):
+        """
+        Iterates over the board to create nicely formatted output string with spaces between each column and new lines
+        after each row except for the last one.
+
+        :param fn: the function to call that returns a single character based off of the x and y coordinates of the
+            board
+        :return: A string representing the board
+        """
         str_to_write = ''
         for j in range(self.size):
             str_to_write += ' ' * self.indent
@@ -256,25 +270,39 @@ class Minesweeper:
             if j + 1 != self.size:
                 str_to_write += '\n'
 
-        print(str_to_write)
+        return str_to_write
 
-    def print_board(self):
+    def create_board(self):
+        """
+        Creates a formatted board for the game in progress state. All uncovered squares, flags, and question marks are
+        displayed. Everything else remains hidden.
+
+        :return: A string representing the board
+        """
         def in_progress(i, j):
             if self._visible[i, j] == 1:
                 return self._convert_board_to_char(self._board[i, j])
             elif self._visible[i, j] == 2:
-                return u'\u2691'
+                return self._FLAG
             elif self._visible[i, j] == 3:
                 return '?'
             else:
                 return '-'
-        self._print_board_iterator(in_progress)
 
-    def print_game_over_board(self):
+        return self._board_iterator(in_progress)
+
+    def create_game_over_board(self):
+        """
+        Creates a formatted board for the game over state. All uncovered squares, mines, flags, and question marks are
+        displayed. Hidden squares where none of the previously mentioned are true remain hidden. Additionally, incorrect
+        flag are marked with an 'X'.
+
+        :return: A string representing the board
+        """
         def game_over(i, j):
             if self._visible[i, j] == 2:
                 if self._board[i, j] == -1:
-                    return u'\u2691'
+                    return self._FLAG
                 else:
                     return 'X'
             elif self._visible[i, j] == 1 or self._board[i, j] == -1:
@@ -283,9 +311,16 @@ class Minesweeper:
                 return '?'
             else:
                 return '-'
-        self._print_board_iterator(game_over)
 
-    def print_show_all_board(self):
+        return self._board_iterator(game_over)
+
+    def create_show_all_board(self):
+        """
+        Creates a formatted board with all of the numbers, mines, and blank squares visible.
+
+        :return: A string representing the board
+        """
         def show_all(i, j):
             return self._convert_board_to_char(self._board[i, j])
-        self._print_board_iterator(show_all)
+
+        return self._board_iterator(show_all)

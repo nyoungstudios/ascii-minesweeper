@@ -9,7 +9,7 @@ from minesweeper.read import controls, Keys
 def main():
     # creates an instance of the game and prints the board
     game = Minesweeper()
-    game.print_board()
+    print(game.create_board())
 
     # keeps track of the coordinate points of the cursor on the board
     x = 0
@@ -49,9 +49,9 @@ def main():
         clear_last_lines(game.size)
 
         if game_lost:
-            game.print_game_over_board()
+            print(game.create_game_over_board())
         else:
-            game.print_board()
+            print(game.create_board())
 
         cursor_reset_original()
 
