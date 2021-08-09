@@ -81,6 +81,8 @@ class PlayMinesweeper:
         # the sum of the height of the header, default board size, menu height and two additional empty lines
         self._HOMEPAGE_HEIGHT = self._HEADER_HEIGHT + Minesweeper.DEFAULT_SIZE + self._MENU_HEIGHT + 2
 
+        self._header_indent = ''
+
         # stores the height of the board
         self._board_height = 0
 
@@ -89,6 +91,7 @@ class PlayMinesweeper:
         self._y = 0
         self._menu_pos = 0
         self._options_pos = 0
+        self._custom_pos = 0
 
         # options to launch the game with
         self._difficulty = self._DEFAULT_DIFFICULTY
@@ -133,6 +136,15 @@ class PlayMinesweeper:
             if interrupt_fn:
                 interrupt_fn()
 
+    def _create_label(self, text, offset=6):
+        return ' ' * (self._center - offset) + text + '\n\n'
+
+    def _add_right_arrow(self, pos, length, index):
+        if pos % length == index:
+            return self._RIGHT_ARROW + ' '
+        else:
+            return ' ' * 2
+
     def launch_game(self):
         START = 1
         BODY = 2
@@ -148,12 +160,8 @@ class PlayMinesweeper:
                 str_to_write += self._game_example + '\n\n'
 
             for i, v in enumerate(self.MENU):
-                str_to_write += ' ' * (self._center - 6)
-                if self._menu_pos % self._MENU_LENGTH == i:
-                    str_to_write += self._RIGHT_ARROW + ' '
-                else:
-                    str_to_write += ' ' * 2
-
+                str_to_write += ' ' * (self._center - 4)
+                str_to_write += self._add_right_arrow(self._menu_pos, self._MENU_LENGTH, i)
                 str_to_write += v + '\n'
 
             print(str_to_write)
@@ -198,22 +206,19 @@ class PlayMinesweeper:
         self._on_key_input(control_map)
 
     def open_options_screen(self):
-        def create_label(text):
-            return ' ' * (self._center - 6) + text + '\n\n'
+        # resets option position to difficulty index
+        self._options_pos = self.OPTIONS.index(self._difficulty)
 
         def create_screen():
             str_to_write = ''
             for i, v in enumerate(self.OPTIONS):
                 if v == self._DEFAULT_MODE:
-                    str_to_write += '\n' + create_label('Modes:')
+                    str_to_write += '\n' + self._create_label('Modes:')
                 elif i == self._OPTIONS_LENGTH - 1:
                     str_to_write += '\n'
 
                 str_to_write += ' ' * (self._center - 6)
-                if self._options_pos % self._OPTIONS_LENGTH == i:
-                    str_to_write += self._RIGHT_ARROW + ' '
-                else:
-                    str_to_write += ' ' * 2
+                str_to_write += self._add_right_arrow(self._options_pos, self._OPTIONS_LENGTH, i)
 
                 if i != self._OPTIONS_LENGTH - 1:
                     if v == self._difficulty or v == self._mode:
@@ -254,7 +259,7 @@ class PlayMinesweeper:
             clear_last_lines(self._OPTIONS_LENGTH + 5)
             print(create_screen())
 
-        screen_body = create_label('Difficulty:')
+        screen_body = self._create_label('Difficulty:')
         screen_body += create_screen()
         print(screen_body)
         self._on_key_input(control_map)
@@ -281,9 +286,7 @@ class PlayMinesweeper:
 
         game = Minesweeper(**opts)
         num_prepend_lines = self._DEFAULT_HEIGHT // 2 - game.height // 2
-        board_str = '\n' * num_prepend_lines + str(game)
-        self._board_height = num_prepend_lines + game.height + 1
-        print(board_str)
+        self._board_height = num_prepend_lines + game.height + 2
 
         # keeps track of the coordinate points of the cursor on the board
         self._x = 0
@@ -303,7 +306,7 @@ class PlayMinesweeper:
             """
             Moves cursor to bottom left of the board
             """
-            cursor_down(game.height - self._y)
+            cursor_down(game.height - self._y + 2)
             cursor_left(game.indent + (self._x * 2))
 
         def cursor_reset_original():
@@ -311,19 +314,49 @@ class PlayMinesweeper:
             Moves cursor it's original location after refreshing the board or the top left of the board on start
             """
             cursor_right(game.indent + (self._x * 2))
-            cursor_up(game.height - self._y)
+            cursor_up(game.height - self._y + 2)
 
-        def refresh_board():
+        def format_header():
+            """
+            Formats game info header
+
+            :return: a formatted string with the game info
+            """
+            moves_str = str(game.moves)
+            moves_ch_len = len(moves_str)
+            header_str = 'Moves: {}'.format(game.moves) + ' ' * (11 - moves_ch_len)  + \
+                         'Mines: {}/{}'.format(game.mines, opts['mines'])
+            if not self._header_indent:
+                self._header_indent = ' ' * (self._center - len(header_str) // 2)
+            return self._header_indent + header_str
+
+        def build_game_screen(msg=None):
+            str_to_write = '\n' + format_header() + '\n\n'
+            remainder_lines = num_prepend_lines - 3
+            if msg:
+                str_to_write += self._header_indent + msg + '\n' + \
+                                self._header_indent + 'Time elapsed: {:.2f} seconds'.format(game.time)
+                remainder_lines -= 1
+
+            str_to_write += '\n' * remainder_lines + str(game) + '\n\n'
+
+            if msg:
+                str_to_write += self._header_indent + 'Press any key to exit.'
+
+            return str_to_write
+
+        def refresh_board(**kwargs):
             """
             Reprints the board in the same location in standard out so that it looks like the board was updated in place
             """
             cursor_bottom_left()
-            clear_last_lines(game.height)
-            print(game)
+            clear_last_lines(self._board_height)
+            print(build_game_screen(**kwargs))
             cursor_reset_original()
 
         def control_map(key):
             if not game:
+                cursor_bottom_left()
                 return self._break()
             elif key == Keys.W:
                 if is_valid_cursor(j=-1):
@@ -343,24 +376,23 @@ class PlayMinesweeper:
                     self._x += 1
             elif key == Keys.ENTER:
                 result = game.uncover_square(self._x, self._y)
-                refresh_board()
+                msg = ''
                 if result == LOST:
-                    cursor_bottom_left()
-                    print('You lost! Game over :(')
+                    msg = 'You lost! Game over :('
                 elif result == WON:
-                    cursor_bottom_left()
-                    print('Congratulations, you won! :)')
+                    msg = 'Congratulations, you won! :)'
+                refresh_board(msg=msg)
             elif key == Keys.SPACE:
                 game.mark_square(self._x, self._y)
                 refresh_board()
             elif key == Keys.BACKSPACE:
                 cursor_bottom_left()
-                print('Exiting minesweeper.')
                 return self._break()
 
         def on_interrupt():
             cursor_bottom_left()
-            print()
+
+        print(build_game_screen())
 
         # moves cursor to top left of board
         cursor_reset_original()
