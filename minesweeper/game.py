@@ -139,7 +139,7 @@ class Minesweeper:
 
         :return: the total elapsed time of the game
         """
-        if self._status == IN_PROGRESS:
+        if self:
             return time.time() - self._start_time
         else:
             return self._time_elapsed
@@ -246,7 +246,7 @@ class Minesweeper:
         """
         Checks the status of the game
 
-        :return: Returns a string representing if the game is 'in_progress', 'lost', or 'won' after this move
+        :return: a string representing if the game is 'in_progress', 'lost', or 'won' after this move
         """
         is_in_progress = False
         for i, j in np.ndindex(*self._visible.shape):
@@ -267,7 +267,7 @@ class Minesweeper:
 
         :param x: x coordinate point
         :param y: y coordinate point
-        :return: Returns a string representing if the game is 'in_progress', 'lost', or 'won' after this move
+        :return: a string representing if the game is 'in_progress', 'lost', or 'won' after this move
         """
         if self.moves == 0:
             self._start_time = time.time()
@@ -285,7 +285,7 @@ class Minesweeper:
                 self._moves += 1
             self._status = self._check_game_status()
 
-        if self._status != IN_PROGRESS:
+        if not self:
             self._time_elapsed = time.time() - self._start_time
 
         return self._status
@@ -397,13 +397,21 @@ class Minesweeper:
 
         return self._board_iterator(show_all)
 
+    def __bool__(self):
+        """
+        Checks if the game is in progress or is over
+
+        :return: True if the game is still in progress, False if the game is over
+        """
+        return self._status == IN_PROGRESS
+
     def __str__(self):
         """
         Creates a formatted board based on the game status
 
         :return: A string representing the board
         """
-        if self._status == IN_PROGRESS:
+        if self:
             return self.create_board()
         else:
             return self.create_game_over_board()
