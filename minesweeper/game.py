@@ -5,6 +5,7 @@ Logic/data structures for the minesweeper game
 """
 import numpy as np
 import os
+import time
 
 # minesweeper game statuses
 LOST = 'lost'
@@ -65,14 +66,16 @@ class Minesweeper:
             term_size = os.get_terminal_size()
             self._indent = term_size.columns // 2 - self.width
 
-        # True for the player's first move
-        self._first_move = True
-
         # stores the game status
         self._status = IN_PROGRESS
+        self._moves = 0
+        self._start_time = 0
+        self._time_elapsed = 0
 
-        # holds the game board data and if it is visible or not
+        # stores the game data
+        # -1 for a mine; otherwise the numerical count of the number of neighboring mines
         self._board = np.zeros(shape=(self.width, self.height))
+        # 0 for hidden, 1 for visible, 2 for flag, 3 for question mark
         self._visible = np.zeros(shape=(self.width, self.height))
 
     @property
@@ -111,6 +114,67 @@ class Minesweeper:
         """
         return self._indent
 
+    @property
+    def moves(self):
+        """
+        Gets the total number of moves made in the game. If the squares are recursively uncovered, that only counts as
+        one move. Putting marking a square as a flag or question mark does not count as a move
+
+        :return: the total number of moves made in the game
+        """
+        return self._moves
+
+    @property
+    def time(self):
+        """
+        Get the total elapsed time of the game. If the game is in progress, calculate the elapsed time; otherwise,
+        return the calculated time from when the game ended
+
+        :return: the total elapsed time of the game
+        """
+        if self._status == IN_PROGRESS:
+            return time.time() - self._start_time
+        else:
+            return self._time_elapsed
+
+    def _is_valid_point(self, x, y):
+        """
+        Checks if a coordinate point is on the board
+
+        :param x: x coordinate point
+        :param y: y coordinate point
+        :return: True if the coordinate point are is valid; otherwise, False
+        """
+        return 0 <= x < self.width and 0 <= y < self.height
+
+    def _call_neighbors(self, fn, x, y, *args, **kwargs):
+        """
+        Calls a function for all neighboring squares
+
+        :param fn: Function to call that accepts x and y arguments followed by any number of args and kwargs
+        :param x: x coordinate point
+        :param y: y coordinate point
+        :param args: args
+        :param kwargs: kwargs
+        :return: the logical or of all of the return values from the functions called
+        """
+        out = None
+        for i, j in self._OFFSETS:
+            v = fn(x + i, y + j, *args, **kwargs)
+            out = out or v
+
+        return out
+
+    def _update_board(self, x, y):
+        """
+        Upon creation of the game board, updates the board with the mine count from the neighboring squares
+
+        :param x: x coordinate point
+        :param y: y coordinate point
+        """
+        if self._is_valid_point(x, y) and self._board[x, y] != -1:
+            self._board[x, y] += 1
+
     def _generate_board(self, x, y):
         """
         Generates the board data and ensures that the player will never lose on the first move
@@ -130,30 +194,7 @@ class Minesweeper:
         for num in mines_nums:
             i, j = divmod(num, self.height)
             self._board[i, j] = -1
-            self._find_neighbors(self._update_board, i, j)
-
-    def _is_valid_point(self, x, y):
-        """
-        Checks if a coordinate point is on the board
-
-        :param x: x coordinate point
-        :param y: y coordinate point
-        :return: True if the coordinate point are is valid; otherwise, False
-        """
-        return 0 <= x < self.width and 0 <= y < self.height
-
-    def _find_neighbors(self, fn, x, y, *args, **kwargs):
-        """
-        Calls a function for all neighboring squares
-
-        :param fn: Function to call that accepts x and y arguments followed by any number of args and kwargs
-        :param x: x coordinate point
-        :param y: y coordinate point
-        :param args: args
-        :param kwargs: kwargs
-        """
-        for i, j in self._OFFSETS:
-            fn(x + i, y + j, *args, **kwargs)
+            self._call_neighbors(self._update_board, i, j)
 
     def _count_neighboring_flags(self, x, y):
         """
@@ -170,16 +211,6 @@ class Minesweeper:
 
         return count
 
-    def _update_board(self, x, y):
-        """
-        Upon creation of the game board, updates the
-
-        :param x: x coordinate point
-        :param y: y coordinate point
-        """
-        if self._is_valid_point(x, y) and self._board[x, y] != -1:
-            self._board[x, y] += 1
-
     def _make_visible(self, x, y, level=0):
         """
         Recursively uncovers a square
@@ -188,16 +219,21 @@ class Minesweeper:
         :param y: y coordinate point
         :param level: 0 is default, -1 for recursively searching hidden or question mark status, 1 for recursively
             searching neighbors if the current position is already visible
+        :return: True if at least one square was uncovered; otherwise, False
         """
         if self._is_valid_point(x, y):
             if self._visible[x, y] in {0, 3}:
                 self._visible[x, y] = 1
                 if self._board[x, y] == 0:
-                    self._find_neighbors(self._make_visible, x, y, level=-1)
+                    self._call_neighbors(self._make_visible, x, y, level=-1)
+                return True
             elif level == 0 and self._visible[x, y] == 1 and self._board[x, y] == self._count_neighboring_flags(x, y):
-                self._find_neighbors(self._make_visible, x, y, level=1)
+                return self._call_neighbors(self._make_visible, x, y, level=1)
             elif level == 1 and self._visible[x, y] in {0, 3}:
                 self._visible[x, y] = 1
+                return True
+
+        return False
 
     def _check_game_status(self):
         """
@@ -226,18 +262,24 @@ class Minesweeper:
         :param y: y coordinate point
         :return: Returns a string representing if the game is 'in_progress', 'lost', or 'won' after this move
         """
-        if self._first_move:
+        if self.moves == 0:
+            self._start_time = time.time()
             self._generate_board(x, y)
-            self._first_move = False
 
         if 2 <= self._visible[x, y] < 3:
             # status is already in progress. Or in other words, it cannot be in progress after the game is over
             pass
         elif self._board[x, y] == -1:
             self._status = LOST
+            self._moves += 1
         else:
-            self._make_visible(x, y)
+            uncovered_square = self._make_visible(x, y)
+            if uncovered_square:
+                self._moves += 1
             self._status = self._check_game_status()
+
+        if self._status != IN_PROGRESS:
+            self._time_elapsed = time.time() - self._start_time
 
         return self._status
 
