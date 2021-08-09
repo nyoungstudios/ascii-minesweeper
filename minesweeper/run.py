@@ -1,6 +1,7 @@
 """
 Runs interactive minesweeper game in standard out
 """
+import copy
 import os
 
 from minesweeper.cursor import *
@@ -28,22 +29,30 @@ class PlayMinesweeper:
         'Medium',
         'Hard',
         'Custom',
+        'Normal',
+        'Double Wide',
+        'Triple Wide',
         'Back'
     )
 
-    _MENU_HEIGHT = len(MENU)
-    _OPTIONS_HEIGHT = len(OPTIONS)
+    _MENU_LENGTH = len(MENU)
+    _OPTIONS_LENGTH = len(OPTIONS)
+
+    _MENU_HEIGHT = _MENU_LENGTH
+    _OPTIONS_HEIGHT = _OPTIONS_LENGTH
 
     _DEFAULT_DIFFICULTY = 'Easy'
-    _DEFAULT_HEIGHT = 24
+    _DEFAULT_MODE = 'Normal'
+    _DEFAULT_HEIGHT = 26
 
     def __init__(self):
         term_size = os.get_terminal_size()
         self._center = term_size.columns // 2
 
         def build_centered_header_text():
-            str_to_write = ''
-            line_count = 0
+            # adds an extra new line to the start of the header text
+            str_to_write = '\n'
+            line_count = 1
             lines = HEADER_TEXT.split('\n')
             indent = self._center - (len(lines[0]) // 2)
             for line in lines:
@@ -83,6 +92,7 @@ class PlayMinesweeper:
 
         # options to launch the game with
         self._difficulty = self._DEFAULT_DIFFICULTY
+        self._mode = self._DEFAULT_MODE
         self._game_options = {
             'Easy': {'size': 10, 'mines': 10},
             'Medium': {'size': 12, 'mines': 25},
@@ -139,7 +149,7 @@ class PlayMinesweeper:
 
             for i, v in enumerate(self.MENU):
                 str_to_write += ' ' * (self._center - 6)
-                if self._menu_pos % 4 == i:
+                if self._menu_pos % self._MENU_LENGTH == i:
                     str_to_write += self._RIGHT_ARROW + ' '
                 else:
                     str_to_write += ' ' * 2
@@ -149,7 +159,7 @@ class PlayMinesweeper:
             print(str_to_write)
 
         def control_map(key):
-            self._menu_pos %= 4
+            self._menu_pos %= self._MENU_LENGTH
             if key == Keys.W:
                 self._menu_pos -= 1
                 clear_last_lines(self._MENU_HEIGHT + 1)
@@ -169,7 +179,7 @@ class PlayMinesweeper:
                     # Options
                     clear_last_lines(self._HOMEPAGE_HEIGHT - self._HEADER_HEIGHT)
                     self.open_options_screen()
-                    clear_last_lines(self._OPTIONS_HEIGHT + 3)
+                    clear_last_lines(self._OPTIONS_HEIGHT + 7)
                     refresh_screen(status=BODY)
                 elif self._menu_pos == 2:
                     # Help
@@ -188,17 +198,25 @@ class PlayMinesweeper:
         self._on_key_input(control_map)
 
     def open_options_screen(self):
+        def create_label(text):
+            return ' ' * (self._center - 6) + text + '\n\n'
+
         def create_screen():
             str_to_write = ''
             for i, v in enumerate(self.OPTIONS):
+                if v == self._DEFAULT_MODE:
+                    str_to_write += '\n' + create_label('Modes:')
+                elif i == self._OPTIONS_LENGTH - 1:
+                    str_to_write += '\n'
+
                 str_to_write += ' ' * (self._center - 6)
-                if self._options_pos % 5 == i:
+                if self._options_pos % self._OPTIONS_LENGTH == i:
                     str_to_write += self._RIGHT_ARROW + ' '
                 else:
                     str_to_write += ' ' * 2
 
-                if i != self._OPTIONS_HEIGHT - 1:
-                    if v == self._difficulty:
+                if i != self._OPTIONS_LENGTH - 1:
+                    if v == self._difficulty or v == self._mode:
                         str_to_write += self._SOLID_CIRCLE + ' '
                     else:
                         str_to_write += self._OPEN_CIRCLE + ' '
@@ -210,7 +228,7 @@ class PlayMinesweeper:
             return str_to_write
 
         def control_map(key):
-            self._options_pos %= 5
+            self._options_pos %= self._OPTIONS_LENGTH
             if key == Keys.W:
                 self._options_pos -= 1
             elif key == Keys.S:
@@ -223,6 +241,9 @@ class PlayMinesweeper:
                     if self._options_pos == 3:
                         pass
                         # call custom screen
+                elif 4 <= self._options_pos <= 6:
+                    # Normal, Double Wide, Triple Wide
+                    self._mode = self.OPTIONS[self._options_pos]
                 else:
                     # Exit
                     return self._break()
@@ -230,10 +251,10 @@ class PlayMinesweeper:
                 # Exit
                 return self._break()
 
-            clear_last_lines(len(self.OPTIONS) + 1)
+            clear_last_lines(self._OPTIONS_LENGTH + 5)
             print(create_screen())
 
-        screen_body = ' ' * (self._center - 6) + 'Difficulty:\n\n'
+        screen_body = create_label('Difficulty:')
         screen_body += create_screen()
         print(screen_body)
         self._on_key_input(control_map)
@@ -244,7 +265,21 @@ class PlayMinesweeper:
 
     def play_game(self):
         # creates an instance of the game and prints the board
-        game = Minesweeper(**self._game_options[self._difficulty])
+        opts = self._game_options[self._difficulty]
+        if self._mode != self._DEFAULT_MODE:
+            opts = copy.copy(opts)
+            h = opts.pop('size')
+            opts['height'] = h
+            if self._mode == 'Double Wide':
+                opts['width'] = 2 * h
+                opts['mines'] *= 2
+            else:
+                opts['width'] = 3 * h
+                opts['mines'] *= 3
+
+            opts['indent'] = self._center - opts['width']
+
+        game = Minesweeper(**opts)
         num_prepend_lines = self._DEFAULT_HEIGHT // 2 - game.height // 2
         board_str = '\n' * num_prepend_lines + str(game)
         self._board_height = num_prepend_lines + game.height + 1
