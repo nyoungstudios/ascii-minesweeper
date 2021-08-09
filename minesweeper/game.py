@@ -34,7 +34,14 @@ class Minesweeper:
     _SQUARE = u'\u25a0'
     _FLAG = u'\u2691'
 
-    def __init__(self, height=DEFAULT_SIZE, width=DEFAULT_SIZE, size=None, mines=DEFAULT_MINES, indent=None):
+    def __init__(
+        self,
+        height: int = DEFAULT_SIZE,
+        width: int = DEFAULT_SIZE,
+        size: int = None,
+        mines: int = DEFAULT_MINES,
+        indent: int = None
+    ):
         """
         Initializes an instance of the Minesweeper game
 
