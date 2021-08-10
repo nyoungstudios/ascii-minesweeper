@@ -36,6 +36,9 @@ class PlayMinesweeper:
         'Back'
     )
 
+    # custom options
+    CUSTOM_PARAMS = ('Mines', 'Height', 'Width', 'Back')
+
     _DEFAULT_DIFFICULTY = 'Easy'
     _DEFAULT_MODE = 'Normal'
     _DEFAULT_HEIGHT = 26
@@ -103,6 +106,7 @@ class PlayMinesweeper:
         # gets the length of the number of arguments on the selector pages
         self._MENU_LENGTH = len(self.MENU)
         self._OPTIONS_LENGTH = len(self.OPTIONS)
+        self._CUSTOM_PARAMS_LENGTH = len(self.CUSTOM_PARAMS)
 
         # builds string constants
         self._CENTERED_HEADER_TXT, self._HEADER_HEIGHT = build_centered_header_text()
@@ -112,6 +116,7 @@ class PlayMinesweeper:
         # sets height of screen with additional spaces taken into account
         self._MENU_HEIGHT = self._MENU_LENGTH + 1
         self._OPTIONS_HEIGHT = self._OPTIONS_LENGTH + 7
+        self._CUSTOM_PARAMS_HEIGHT = self._CUSTOM_PARAMS_LENGTH + 4
 
         # the sum of the height of the header, default board size, menu height and an additional empty line
         self._HOMEPAGE_HEIGHT = self._HEADER_HEIGHT + Minesweeper.DEFAULT_SIZE + self._MENU_HEIGHT + 1
@@ -135,13 +140,12 @@ class PlayMinesweeper:
         self._game_options = {
             'Easy': {'size': 10, 'mines': 10},
             'Medium': {'size': 12, 'mines': 25},
-            'Hard': {'size': 15, 'mines': 45}
+            'Hard': {'size': 15, 'mines': 45},
+            'Custom': {'height': 10, 'width': 10, 'mines': 10}
         }
 
-        # sets board indent
-        for level, opt in self._game_options.items():
-            width = opt.get('size') or opt.get('width')
-            opt['indent'] = self._center - width
+        # sets board indent for example board
+        self._game_options[self._difficulty]['indent'] = self._center - self._game_options[self._difficulty]['size']
 
         # example board for home screen
         self._game_example = str(Minesweeper(**self._game_options[self._DEFAULT_DIFFICULTY]))
@@ -202,9 +206,9 @@ class PlayMinesweeper:
         """
         The main function to start and run the game. This is the game's homepage
         """
-        START = 1
-        BODY = 2
-        MENU = 3
+        START = 1  # print the whole screen
+        BODY = 2   # prints the example board and menu options
+        MENU = 3   # just prints the menu options
 
         def refresh_screen(status=MENU):
             str_to_write = ''
@@ -263,6 +267,78 @@ class PlayMinesweeper:
         # listen on keyboard input
         self._on_key_input(control_map)
 
+    def open_custom_options_screen(self):
+        """
+        Opens and runs custom options screen
+        """
+        numbers = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
+        self._custom_pos = 0
+
+        def get_attr_and_count():
+            # gets the custom param attribute name and associated count
+            attr = self.CUSTOM_PARAMS[self._custom_pos].lower()
+            count = self._game_options['Custom'][attr]
+            return attr, count
+
+        def set_attr_count(attr, count):
+            # given an attribute name, sets the count
+            self._game_options['Custom'][attr] = count
+
+        def refresh_screen(initial_header=False):
+            str_to_write = ''
+            if initial_header:
+                str_to_write = self._create_label('Custom:')
+            for i, v in enumerate(self.CUSTOM_PARAMS):
+                if i == self._CUSTOM_PARAMS_LENGTH - 1:
+                    str_to_write += '\n'
+
+                str_to_write += ' ' * (self._center - 6)
+                str_to_write += self._add_right_arrow(self._custom_pos, self._CUSTOM_PARAMS_LENGTH, i)
+
+                str_to_write += v
+
+                if i != self._CUSTOM_PARAMS_LENGTH - 1:
+                    str_to_write += ': {}'.format(self._game_options['Custom'][v.lower()])
+
+                str_to_write += '\n'
+
+
+            print(str_to_write)
+
+        def control_map(key):
+            self._custom_pos %= self._CUSTOM_PARAMS_LENGTH
+            if key == Keys.W:
+                self._custom_pos -= 1
+            elif key == Keys.S:
+                self._custom_pos += 1
+            elif key == Keys.ENTER:
+                if self._custom_pos == 3:
+                    return self._break()
+                else:
+                    return
+            elif self._custom_pos != self._CUSTOM_PARAMS_LENGTH - 1:
+                if key in numbers:
+                    name, count = get_attr_and_count()
+                    stringify_count = str(count) + key
+                    set_attr_count(name, int(stringify_count))
+                elif key == Keys.BACKSPACE:
+                    name, old_count = get_attr_and_count()
+                    stringify_count = str(old_count)[:-1]
+                    new_count = int(stringify_count) if stringify_count else 0
+                    if old_count == new_count:
+                        return
+                    set_attr_count(name, new_count)
+
+            # no need to clear the initial label
+            clear_last_lines(self._CUSTOM_PARAMS_HEIGHT - 2)
+            refresh_screen()
+
+        # prints initial screen
+        refresh_screen(initial_header=True)
+
+        # listen on keyboard input
+        self._on_key_input(control_map)
+
     def open_options_screen(self):
         """
         Opens and runs the option screen
@@ -270,8 +346,10 @@ class PlayMinesweeper:
         # resets option position to difficulty index
         self._options_pos = self.OPTIONS.index(self._difficulty)
 
-        def create_screen():
+        def refresh_screen(initial_header=False):
             str_to_write = ''
+            if initial_header:
+                str_to_write = self._create_label('Difficulty:')
             for i, v in enumerate(self.OPTIONS):
                 if v == self._DEFAULT_MODE:
                     str_to_write += '\n' + self._create_label('Modes:')
@@ -291,7 +369,7 @@ class PlayMinesweeper:
 
                 str_to_write += v + '\n'
 
-            return str_to_write
+            print(str_to_write)
 
         def control_map(key):
             self._options_pos %= self._OPTIONS_LENGTH
@@ -300,13 +378,20 @@ class PlayMinesweeper:
             elif key == Keys.S:
                 self._options_pos += 1
             elif key == Keys.ENTER:
-                if 0 <= self._options_pos <= 3:
+                if self.OPTIONS[self._options_pos] in {self._difficulty, self._mode}.difference({'Custom'}):
+                    # no need to refresh the screen if nothing changed
+                    return
+                elif 0 <= self._options_pos <= 3:
                     # Easy, Medium, Hard, and Custom
                     self._difficulty = self.OPTIONS[self._options_pos]
 
                     if self._options_pos == 3:
-                        pass
                         # call custom screen
+                        clear_last_lines(self._OPTIONS_HEIGHT)
+                        self.open_custom_options_screen()
+                        clear_last_lines(self._CUSTOM_PARAMS_HEIGHT)
+                        refresh_screen(initial_header=True)
+                        return
                 elif 4 <= self._options_pos <= 6:
                     # Normal, Double Wide, Triple Wide
                     self._mode = self.OPTIONS[self._options_pos]
@@ -317,13 +402,12 @@ class PlayMinesweeper:
                 # Exit
                 return self._break()
 
-            clear_last_lines(self._OPTIONS_LENGTH + 5)
-            print(create_screen())
+            # no need to clear the initial label
+            clear_last_lines(self._OPTIONS_HEIGHT - 2)
+            refresh_screen()
 
-        # builds and prints initial screen
-        screen_body = self._create_label('Difficulty:')
-        screen_body += create_screen()
-        print(screen_body)
+        # prints initial screen
+        refresh_screen(initial_header=True)
 
         # listen on keyboard input
         self._on_key_input(control_map)
@@ -338,7 +422,7 @@ class PlayMinesweeper:
     def play_game(self):
         # sets game options based off of difficulty level and mode selected
         opts = self._game_options[self._difficulty]
-        if self._mode != self._DEFAULT_MODE:
+        if self._mode != self._DEFAULT_MODE and self._difficulty != 'Custom':
             opts = copy.copy(opts)
             h = opts.pop('size')
             opts['height'] = h
@@ -349,7 +433,7 @@ class PlayMinesweeper:
                 opts['width'] = 3 * h
                 opts['mines'] *= 3
 
-            opts['indent'] = self._center - opts['width']
+        opts['indent'] = self._center - (opts.get('width') or opts.get('size'))
 
         # creates an instance of the game
         game = Minesweeper(**opts)
