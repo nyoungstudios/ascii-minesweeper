@@ -23,7 +23,6 @@ class Keys:
     SPACE = 'space'
     BACKSPACE = 'backspace'
     DELETE = 'delete'
-    WASD = {W, A, S, D}
 
 
 def get_char():
@@ -93,9 +92,7 @@ def controls():
         i = ord(ch)
         ascii_arr.append(i)
         ascii_arr = ascii_arr[-4:]
-        if ch in Keys.WASD:
-            yield ch
-        elif i == 10:
+        if i == 10:
             yield Keys.ENTER
         elif i == 32:
             yield Keys.SPACE
@@ -111,3 +108,6 @@ def controls():
             yield Keys.D
         elif ascii_arr == DELETE_SEQ:
             yield Keys.DELETE
+        elif 33 <= i <= 126:
+            # printable characters
+            yield ch
