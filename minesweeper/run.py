@@ -438,7 +438,7 @@ class PlayMinesweeper:
         # creates an instance of the game
         game = Minesweeper(**opts)
         # calculates the number of new lines that need to be prepended to properly center the board
-        num_prepend_lines = self._DEFAULT_HEIGHT // 2 - game.height // 2
+        num_prepend_lines = max(self._DEFAULT_HEIGHT // 2 - game.height // 2, 6)
         self._BOARD_HEIGHT = num_prepend_lines + game.height + 2
 
         # keeps track of the coordinate points of the cursor on the board
