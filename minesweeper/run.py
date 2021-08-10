@@ -24,6 +24,7 @@ class PlayMinesweeper:
         'Exit'
     )
 
+    # option menu options
     OPTIONS = (
         'Easy',
         'Medium',
@@ -35,12 +36,6 @@ class PlayMinesweeper:
         'Back'
     )
 
-    _MENU_LENGTH = len(MENU)
-    _OPTIONS_LENGTH = len(OPTIONS)
-
-    _MENU_HEIGHT = _MENU_LENGTH
-    _OPTIONS_HEIGHT = _OPTIONS_LENGTH
-
     _DEFAULT_DIFFICULTY = 'Easy'
     _DEFAULT_MODE = 'Normal'
     _DEFAULT_HEIGHT = 26
@@ -50,6 +45,11 @@ class PlayMinesweeper:
         self._center = term_size.columns // 2
 
         def build_centered_header_text():
+            """
+            Builds a centered Minesweeper ASCII art header text
+
+            :return: a tuple of the string to write and the number of vertical lines it takes up
+            """
             # adds an extra new line to the start of the header text
             str_to_write = '\n'
             line_count = 1
@@ -66,6 +66,11 @@ class PlayMinesweeper:
             return str_to_write, line_count
 
         def build_help_text():
+            """
+            Builds the help text to be shown on the help screen
+
+            :return: a tuple of the string to write and the number of vertical lines it takes up
+            """
             str_to_write = ''
             line_count = 0
             for line in HELP_SCREEN:
@@ -74,17 +79,28 @@ class PlayMinesweeper:
 
             return str_to_write, line_count
 
+        # defines the constants for the height of the screen of the various pages
+
+        # gets the length of the number of arguments on the selector pages
+        self._MENU_LENGTH = len(self.MENU)
+        self._OPTIONS_LENGTH = len(self.OPTIONS)
+
+        # builds string constants
+        self._CENTERED_HEADER_TXT, self._HEADER_HEIGHT = build_centered_header_text()
         self._HELP_TXT, self._HELP_HEIGHT = build_help_text()
 
-        self._CENTERED_HEADER_TXT, self._HEADER_HEIGHT = build_centered_header_text()
+        # sets height of screen with additional spaces taken into account
+        self._MENU_HEIGHT = self._MENU_LENGTH + 1
+        self._OPTIONS_HEIGHT = self._OPTIONS_LENGTH + 7
 
-        # the sum of the height of the header, default board size, menu height and two additional empty lines
-        self._HOMEPAGE_HEIGHT = self._HEADER_HEIGHT + Minesweeper.DEFAULT_SIZE + self._MENU_HEIGHT + 2
+        # the sum of the height of the header, default board size, menu height and an additional empty line
+        self._HOMEPAGE_HEIGHT = self._HEADER_HEIGHT + Minesweeper.DEFAULT_SIZE + self._MENU_HEIGHT + 1
 
+        # stores the height of the board on the game screen
+        self._BOARD_HEIGHT = 0
+
+        # stores the string to indent the header on the game screen
         self._header_indent = ''
-
-        # stores the height of the board
-        self._board_height = 0
 
         # values to store position of cursor
         self._x = 0
@@ -136,16 +152,36 @@ class PlayMinesweeper:
             if interrupt_fn:
                 interrupt_fn()
 
-    def _create_label(self, text, offset=6):
-        return ' ' * (self._center - offset) + text + '\n\n'
+    def _create_label(self, label, offset=6):
+        """
+        Helper function to create a formatted string for a label text for option/menu screens with an additional
+        newline afterwards
+
+        :param label: the label name
+        :param offset: the number of characters to the left to offset from center
+        :return: a formatted string
+        """
+        return ' ' * (self._center - offset) + label + '\n\n'
 
     def _add_right_arrow(self, pos, length, index):
+        """
+        Helper function to write the right arrow selector based off of the current position, number of options, and the
+        index.
+
+        :param pos: current position of the selected menu option
+        :param length: the number of menu options
+        :param index: the current index as you iterate over the menu options
+        :return: a string with a right arrow and a space if the position matches the index; otherwise, two spaces
+        """
         if pos % length == index:
             return self._RIGHT_ARROW + ' '
         else:
             return ' ' * 2
 
     def launch_game(self):
+        """
+        The main function to start and run the game. This is the game's homepage
+        """
         START = 1
         BODY = 2
         MENU = 3
@@ -170,30 +206,30 @@ class PlayMinesweeper:
             self._menu_pos %= self._MENU_LENGTH
             if key == Keys.W:
                 self._menu_pos -= 1
-                clear_last_lines(self._MENU_HEIGHT + 1)
+                clear_last_lines(self._MENU_HEIGHT)
                 refresh_screen()
             elif key == Keys.S:
                 self._menu_pos += 1
-                clear_last_lines(self._MENU_HEIGHT + 1)
+                clear_last_lines(self._MENU_HEIGHT)
                 refresh_screen()
             elif key == Keys.ENTER:
                 if self._menu_pos == 0:
                     # Play
                     clear_last_lines(self._HOMEPAGE_HEIGHT)
                     self.play_game()
-                    clear_last_lines(self._board_height)
+                    clear_last_lines(self._BOARD_HEIGHT)
                     refresh_screen(status=START)
                 elif self._menu_pos == 1:
                     # Options
                     clear_last_lines(self._HOMEPAGE_HEIGHT - self._HEADER_HEIGHT)
                     self.open_options_screen()
-                    clear_last_lines(self._OPTIONS_HEIGHT + 7)
+                    clear_last_lines(self._OPTIONS_HEIGHT)
                     refresh_screen(status=BODY)
                 elif self._menu_pos == 2:
                     # Help
                     clear_last_lines(self._HOMEPAGE_HEIGHT)
                     self.open_help_screen()
-                    clear_last_lines(self._HELP_HEIGHT + 2)
+                    clear_last_lines(self._HELP_HEIGHT + 4)
                     refresh_screen(status=START)
                 else:
                     # Exit
@@ -202,10 +238,15 @@ class PlayMinesweeper:
                 # Exit
                 return self._break()
 
+        # prints initial screen
         refresh_screen(status=START)
+        # listen on keyboard input
         self._on_key_input(control_map)
 
     def open_options_screen(self):
+        """
+        Opens and runs the option screen
+        """
         # resets option position to difficulty index
         self._options_pos = self.OPTIONS.index(self._difficulty)
 
@@ -259,17 +300,23 @@ class PlayMinesweeper:
             clear_last_lines(self._OPTIONS_LENGTH + 5)
             print(create_screen())
 
+        # builds and prints initial screen
         screen_body = self._create_label('Difficulty:')
         screen_body += create_screen()
         print(screen_body)
+
+        # listen on keyboard input
         self._on_key_input(control_map)
 
     def open_help_screen(self):
-        print(self._HELP_TXT, end='')
+        """
+        Opens help screen
+        """
+        print(self._HELP_TXT)
         self._on_key_input()
 
     def play_game(self):
-        # creates an instance of the game and prints the board
+        # sets game options based off of difficulty level and mode selected
         opts = self._game_options[self._difficulty]
         if self._mode != self._DEFAULT_MODE:
             opts = copy.copy(opts)
@@ -284,9 +331,11 @@ class PlayMinesweeper:
 
             opts['indent'] = self._center - opts['width']
 
+        # creates an instance of the game
         game = Minesweeper(**opts)
+        # calculates the number of new lines that need to be prepended to properly center the board
         num_prepend_lines = self._DEFAULT_HEIGHT // 2 - game.height // 2
-        self._board_height = num_prepend_lines + game.height + 2
+        self._BOARD_HEIGHT = num_prepend_lines + game.height + 2
 
         # keeps track of the coordinate points of the cursor on the board
         self._x = 0
@@ -331,6 +380,12 @@ class PlayMinesweeper:
             return self._header_indent + header_str
 
         def build_game_screen(msg=None):
+            """
+            Builds the text to write for the game screen. Includes header/footer text as well as text for the game board
+
+            :param msg: Message to add to the header (should be used for displaying game over information)
+            :return: a formatted string to write
+            """
             str_to_write = '\n' + format_header() + '\n\n'
             remainder_lines = num_prepend_lines - 3
             if msg:
@@ -350,12 +405,13 @@ class PlayMinesweeper:
             Reprints the board in the same location in standard out so that it looks like the board was updated in place
             """
             cursor_bottom_left()
-            clear_last_lines(self._board_height)
+            clear_last_lines(self._BOARD_HEIGHT)
             print(build_game_screen(**kwargs))
             cursor_reset_original()
 
         def control_map(key):
             if not game:
+                # if the game is over, wait on any key press to exit
                 cursor_bottom_left()
                 return self._break()
             elif key == Keys.W:
@@ -392,11 +448,13 @@ class PlayMinesweeper:
         def on_interrupt():
             cursor_bottom_left()
 
+        # print initial board
         print(build_game_screen())
 
         # moves cursor to top left of board
         cursor_reset_original()
 
+        # listen on keyboard input
         self._on_key_input(control_map, on_interrupt)
 
 

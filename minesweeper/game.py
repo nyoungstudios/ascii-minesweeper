@@ -4,7 +4,6 @@ Minesweeper game
 Logic/data structures for the minesweeper game
 """
 import numpy as np
-import os
 import time
 
 # minesweeper game statuses
@@ -40,7 +39,7 @@ class Minesweeper:
         width: int = DEFAULT_SIZE,
         size: int = None,
         mines: int = DEFAULT_MINES,
-        indent: int = None
+        indent: int = 0
     ):
         """
         Initializes an instance of the Minesweeper game
@@ -50,8 +49,7 @@ class Minesweeper:
         :param size: The horizontal and vertical length of the board to create. If this is provided, it will override
             height and width values
         :param mines: The number of mines that should be present on the board
-        :param indent: The number of spaces to indent the board on the left size. If None, will auto center the board
-            in the terminal
+        :param indent: The number of spaces to indent the board on the left size
         """
         # the board size
         if size:
@@ -66,12 +64,7 @@ class Minesweeper:
         self._player_mine_count = 0
 
         # the number of spaces to indent
-        if isinstance(indent, int):
-            self._indent = indent
-        else:
-            # auto centers board in terminal
-            term_size = os.get_terminal_size()
-            self._indent = term_size.columns // 2 - self.width
+        self._indent = indent
 
         # stores the game status
         self._status = IN_PROGRESS
