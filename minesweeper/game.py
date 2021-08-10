@@ -33,6 +33,12 @@ class Minesweeper:
     _SQUARE = u'\u25a0'
     _FLAG = u'\u2691'
 
+    # visible states
+    _MARK_HIDDEN = 0
+    _MARK_VISIBLE = 1
+    _MARK_FLAG = 2
+    _MARK_QUESTION_MARK = 3
+
     def __init__(
         self,
         height: int = DEFAULT_SIZE,
@@ -149,7 +155,7 @@ class Minesweeper:
 
     def _call_neighbors(self, fn, x, y, *args, **kwargs):
         """
-        Calls a function for all neighboring squares
+        Calls a function for all valid neighboring squares
 
         :param fn: Function to call that accepts x and y arguments followed by any number of args and kwargs
         :param x: x coordinate point
@@ -160,8 +166,9 @@ class Minesweeper:
         """
         out = None
         for i, j in self._OFFSETS:
-            v = fn(x + i, y + j, *args, **kwargs)
-            out = out or v
+            if self._is_valid_point(x + i, y + j):
+                v = fn(x + i, y + j, *args, **kwargs)
+                out = out or v
 
         return out
 
@@ -172,7 +179,7 @@ class Minesweeper:
         :param x: x coordinate point
         :param y: y coordinate point
         """
-        if self._is_valid_point(x, y) and self._board[x, y] != -1:
+        if self._board[x, y] != -1:
             self._board[x, y] += 1
 
     def _generate_board(self, x, y):
@@ -206,7 +213,7 @@ class Minesweeper:
         """
         count = 0
         for i, j in self._OFFSETS:
-            if self._is_valid_point(x + i, y + j) and self._visible[x + i, y + j] == 2:
+            if self._is_valid_point(x + i, y + j) and self._visible[x + i, y + j] == self._MARK_FLAG:
                 count += 1
 
         return count
@@ -221,17 +228,16 @@ class Minesweeper:
             searching neighbors if the current position is already visible
         :return: True if at least one square was uncovered; otherwise, False
         """
-        if self._is_valid_point(x, y):
-            if self._visible[x, y] in {0, 3}:
-                self._visible[x, y] = 1
-                if self._board[x, y] == 0:
-                    self._call_neighbors(self._make_visible, x, y, level=-1)
-                return True
-            elif level == 0 and self._visible[x, y] == 1 and self._board[x, y] == self._count_neighboring_flags(x, y):
-                return self._call_neighbors(self._make_visible, x, y, level=1)
-            elif level == 1 and self._visible[x, y] in {0, 3}:
-                self._visible[x, y] = 1
-                return True
+        if self._visible[x, y] in {self._MARK_HIDDEN, self._MARK_QUESTION_MARK}:
+            self._visible[x, y] = self._MARK_VISIBLE
+            if self._board[x, y] == 0:
+                self._call_neighbors(self._make_visible, x, y, level=-1)
+            return True
+        elif level == 0 and self._visible[x, y] == self._MARK_VISIBLE and self._board[x, y] == self._count_neighboring_flags(x, y):
+            return self._call_neighbors(self._make_visible, x, y, level=1) or False
+        elif level == 1 and self._visible[x, y] in {self._MARK_HIDDEN, self._MARK_QUESTION_MARK}:
+            self._visible[x, y] = self._MARK_VISIBLE
+            return True
 
         return False
 
@@ -243,9 +249,9 @@ class Minesweeper:
         """
         is_in_progress = False
         for i, j in np.ndindex(*self._visible.shape):
-            if self._visible[i, j] == 1 and self._board[i, j] == -1:
+            if self._visible[i, j] == self._MARK_VISIBLE and self._board[i, j] == -1:
                 return LOST
-            elif self._visible[i, j] != 1 and self._board[i, j] != -1:
+            elif self._visible[i, j] != self._MARK_VISIBLE and self._board[i, j] != -1:
                 is_in_progress = True
 
         if is_in_progress:
@@ -266,8 +272,8 @@ class Minesweeper:
             self._start_time = time.time()
             self._generate_board(x, y)
 
-        if 2 <= self._visible[x, y] < 3:
-            # status is already in progress. Or in other words, it cannot be in progress after the game is over
+        if self._visible[x, y] == self._MARK_FLAG:
+            # if square is a flag, no game status or squares to update
             pass
         elif self._board[x, y] == -1:
             self._status = LOST
@@ -291,17 +297,17 @@ class Minesweeper:
         :param x: x coordinate point
         :param y: y coordinate point
         """
-        if self._visible[x, y] == 0:
+        if self._visible[x, y] == self._MARK_HIDDEN:
             # convert from hidden to flag
-            self._visible[x, y] = 2
+            self._visible[x, y] = self._MARK_FLAG
             self._player_mine_count += 1
-        elif self._visible[x, y] == 2:
+        elif self._visible[x, y] == self._MARK_FLAG:
             # convert from flag to question mark
-            self._visible[x, y] = 3
+            self._visible[x, y] = self._MARK_QUESTION_MARK
             self._player_mine_count -= 1
-        elif self._visible[x, y] == 3:
+        elif self._visible[x, y] == self._MARK_QUESTION_MARK:
             # convert from question mark to hidden
-            self._visible[x, y] = 0
+            self._visible[x, y] = self._MARK_HIDDEN
 
     def _convert_board_to_char(self, v):
         if v == 0:
@@ -345,11 +351,11 @@ class Minesweeper:
         :return: A string representing the board
         """
         def in_progress(i, j):
-            if self._visible[i, j] == 1:
+            if self._visible[i, j] == self._MARK_VISIBLE:
                 return self._convert_board_to_char(self._board[i, j])
-            elif self._visible[i, j] == 2:
+            elif self._visible[i, j] == self._MARK_FLAG:
                 return self._FLAG
-            elif self._visible[i, j] == 3:
+            elif self._visible[i, j] == self._MARK_QUESTION_MARK:
                 return '?'
             else:
                 return '-'
@@ -365,14 +371,14 @@ class Minesweeper:
         :return: A string representing the board
         """
         def game_over(i, j):
-            if self._visible[i, j] == 2:
+            if self._visible[i, j] == self._MARK_FLAG:
                 if self._board[i, j] == -1:
                     return self._FLAG
                 else:
                     return 'X'
-            elif self._visible[i, j] == 1 or self._board[i, j] == -1:
+            elif self._visible[i, j] == self._MARK_VISIBLE or self._board[i, j] == -1:
                 return self._convert_board_to_char(self._board[i, j])
-            elif self._visible[i, j] == 3:
+            elif self._visible[i, j] == self._MARK_QUESTION_MARK:
                 return '?'
             else:
                 return '-'
