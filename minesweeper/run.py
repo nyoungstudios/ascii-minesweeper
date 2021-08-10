@@ -44,6 +44,10 @@ class PlayMinesweeper:
         term_size = os.get_terminal_size()
         self._center = term_size.columns // 2
 
+        header_lines = HEADER_TEXT.split('\n')
+        header_length = len(header_lines[0])
+        header_indent = self._center - (header_length // 2)
+
         def build_centered_header_text():
             """
             Builds a centered Minesweeper ASCII art header text
@@ -53,11 +57,9 @@ class PlayMinesweeper:
             # adds an extra new line to the start of the header text
             str_to_write = '\n'
             line_count = 1
-            lines = HEADER_TEXT.split('\n')
-            indent = self._center - (len(lines[0]) // 2)
-            for line in lines:
+            for line in header_lines:
                 line_count += 1
-                str_to_write += ' ' * indent + line + '\n'
+                str_to_write += ' ' * header_indent + line + '\n'
 
             # adds an extra new line to the end of the header text
             str_to_write += '\n'
@@ -65,17 +67,34 @@ class PlayMinesweeper:
 
             return str_to_write, line_count
 
-        def build_help_text():
+        def build_centered_help_text():
             """
-            Builds the help text to be shown on the help screen
+            Builds a centered the help text to be shown on the help screen
 
             :return: a tuple of the string to write and the number of vertical lines it takes up
             """
             str_to_write = ''
             line_count = 0
             for line in HELP_SCREEN:
+                str_to_write += ' ' * header_indent
+                partial_line = line
+                # if the line is too long, split it into multiple
+                while len(partial_line) > header_length:
+                    # makes sure the line is split on a word
+                    index = 0
+                    for word in partial_line.split(' '):
+                        if index + len(word) >= header_length:
+                            break
+                        else:
+                            index += len(word) + 1
+
+                    str_to_write += partial_line[:index] + '\n' + ' ' * header_indent
+                    line_count += 1
+
+                    partial_line = partial_line[index:]
+
+                str_to_write += partial_line + '\n'
                 line_count += 1
-                str_to_write += line + '\n'
 
             return str_to_write, line_count
 
@@ -87,7 +106,8 @@ class PlayMinesweeper:
 
         # builds string constants
         self._CENTERED_HEADER_TXT, self._HEADER_HEIGHT = build_centered_header_text()
-        self._HELP_TXT, self._HELP_HEIGHT = build_help_text()
+        self._HELP_TXT, self._HELP_HEIGHT = build_centered_help_text()
+        self._HELP_HEIGHT += 1  # for additional empty line
 
         # sets height of screen with additional spaces taken into account
         self._MENU_HEIGHT = self._MENU_LENGTH + 1
@@ -100,7 +120,7 @@ class PlayMinesweeper:
         self._BOARD_HEIGHT = 0
 
         # stores the string to indent the header on the game screen
-        self._header_indent = ''
+        self._game_header_indent = ''
 
         # values to store position of cursor
         self._x = 0
@@ -229,7 +249,7 @@ class PlayMinesweeper:
                     # Help
                     clear_last_lines(self._HOMEPAGE_HEIGHT)
                     self.open_help_screen()
-                    clear_last_lines(self._HELP_HEIGHT + 4)
+                    clear_last_lines(self._HELP_HEIGHT)
                     refresh_screen(status=START)
                 else:
                     # Exit
@@ -375,9 +395,9 @@ class PlayMinesweeper:
             moves_ch_len = len(moves_str)
             header_str = 'Moves: {}'.format(game.moves) + ' ' * (11 - moves_ch_len)  + \
                          'Mines: {}/{}'.format(game.mines, opts['mines'])
-            if not self._header_indent:
-                self._header_indent = ' ' * (self._center - len(header_str) // 2)
-            return self._header_indent + header_str
+            if not self._game_header_indent:
+                self._game_header_indent = ' ' * (self._center - len(header_str) // 2)
+            return self._game_header_indent + header_str
 
         def build_game_screen(msg=None):
             """
@@ -389,14 +409,14 @@ class PlayMinesweeper:
             str_to_write = '\n' + format_header() + '\n\n'
             remainder_lines = num_prepend_lines - 3
             if msg:
-                str_to_write += self._header_indent + msg + '\n' + \
-                                self._header_indent + 'Time elapsed: {:.2f} seconds'.format(game.time)
+                str_to_write += self._game_header_indent + msg + '\n' + \
+                                self._game_header_indent + 'Time elapsed: {:.2f} seconds'.format(game.time)
                 remainder_lines -= 1
 
             str_to_write += '\n' * remainder_lines + str(game) + '\n\n'
 
             if msg:
-                str_to_write += self._header_indent + 'Press any key to exit.'
+                str_to_write += self._game_header_indent + 'Press any key to exit.'
 
             return str_to_write
 
