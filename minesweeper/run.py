@@ -274,10 +274,13 @@ class PlayMinesweeper:
         numbers = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
         self._custom_pos = 0
 
+        def get_count(attr):
+            return self._game_options['Custom'][attr]
+
         def get_attr_and_count():
             # gets the custom param attribute name and associated count
             attr = self.CUSTOM_PARAMS[self._custom_pos].lower()
-            count = self._game_options['Custom'][attr]
+            count = get_count(attr)
             return attr, count
 
         def set_attr_count(attr, count):
@@ -298,7 +301,7 @@ class PlayMinesweeper:
                 str_to_write += v
 
                 if i != self._CUSTOM_PARAMS_LENGTH - 1:
-                    str_to_write += ': {}'.format(self._game_options['Custom'][v.lower()])
+                    str_to_write += ': {}'.format(get_count(v.lower()))
 
                 str_to_write += '\n'
 
@@ -313,6 +316,13 @@ class PlayMinesweeper:
                 self._custom_pos += 1
             elif key == Keys.ENTER:
                 if self._custom_pos == 3:
+                    mines = get_count('mines')
+                    height = get_count('height')
+                    width = get_count('width')
+                    # a board with 80% mines
+                    max_mines = int(height * width * 0.8)
+                    if mines >= max_mines:
+                        set_attr_count('mines', max_mines)
                     return self._break()
                 else:
                     return
