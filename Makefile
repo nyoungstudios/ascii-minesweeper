@@ -22,7 +22,7 @@ clean-build:
 	@rm -rf *.egg-info
 
 run:
-	@python minesweeper/run.py
+	@python minesweeper/play.py
 
 install:
 	@python setup.py install

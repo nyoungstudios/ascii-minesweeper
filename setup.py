@@ -25,7 +25,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'minesweeper = minesweeper.run:main'
+            'minesweeper = minesweeper.play:main'
         ]
     },
     classifiers=(
