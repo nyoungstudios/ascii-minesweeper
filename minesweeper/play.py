@@ -147,9 +147,6 @@ class PlayMinesweeper:
         # sets board indent for example board
         self._game_options[self._difficulty]['indent'] = self._center - self._game_options[self._difficulty]['size']
 
-        # example board for home screen
-        self._game_example = str(Minesweeper(**self._game_options[self._DEFAULT_DIFFICULTY]))
-
     @staticmethod
     def _break():
         return True
@@ -217,7 +214,11 @@ class PlayMinesweeper:
                 if status == START:
                     str_to_write += self._CENTERED_HEADER_TXT
 
-                str_to_write += self._game_example + '\n\n'
+                # example board for home screen
+                game_example = Minesweeper(**self._game_options[self._DEFAULT_DIFFICULTY])
+                game_example.uncover_square(0, 0)
+
+                str_to_write += str(game_example.create_show_all_board()) + '\n\n'
 
             for i, v in enumerate(self.MENU):
                 str_to_write += ' ' * (self._center - 4)
