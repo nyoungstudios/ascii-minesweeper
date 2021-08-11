@@ -189,7 +189,7 @@ class Minesweeper:
         :param x: x coordinate point of the first move
         :param y: y coordinate point of the first move
         """
-        value = (x * self.width) + y
+        value = (x * self.height) + y
 
         while True:
             # random values to set as the mines on the board
