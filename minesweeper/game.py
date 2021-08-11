@@ -84,6 +84,9 @@ class Minesweeper:
         # 0 for hidden, 1 for visible, 2 for flag, 3 for question mark
         self._visible = np.zeros(shape=(self.width, self.height))
 
+        # stores which indices have already been searched when recursively finding squares to recover
+        self._already_searched = None
+
     @property
     def height(self):
         """
@@ -153,13 +156,15 @@ class Minesweeper:
         """
         return 0 <= x < self.width and 0 <= y < self.height
 
-    def _call_neighbors(self, fn, x, y, *args, **kwargs):
+    def _call_neighbors(self, fn, x, y, check_searched=False, *args, **kwargs):
         """
         Calls a function for all valid neighboring squares
 
         :param fn: Function to call that accepts x and y arguments followed by any number of args and kwargs
         :param x: x coordinate point
         :param y: y coordinate point
+        :param check_searched: if True, will check if a square has already been called by the recursive search rather
+            than calling the function again
         :param args: args
         :param kwargs: kwargs
         :return: the logical or of all of the return values from the functions called
@@ -167,8 +172,9 @@ class Minesweeper:
         out = None
         for i, j in self._OFFSETS:
             if self._is_valid_point(x + i, y + j):
-                v = fn(x + i, y + j, *args, **kwargs)
-                out = out or v
+                if not check_searched or (self._already_searched is not None and self._already_searched[x + i, y + j] == 0):
+                    v = fn(x + i, y + j, *args, **kwargs)
+                    out = out or v
 
         return out
 
@@ -228,13 +234,14 @@ class Minesweeper:
             searching neighbors if the current position is already visible
         :return: True if at least one square was uncovered; otherwise, False
         """
+        self._already_searched[x, y] = 1
         if self._visible[x, y] in {self._MARK_HIDDEN, self._MARK_QUESTION_MARK}:
             self._visible[x, y] = self._MARK_VISIBLE
             if self._board[x, y] == 0:
-                self._call_neighbors(self._make_visible, x, y, level=-1)
+                self._call_neighbors(self._make_visible, x, y, check_searched=True, level=-1)
             return True
         elif level == 0 and self._visible[x, y] == self._MARK_VISIBLE and self._board[x, y] == self._count_neighboring_flags(x, y):
-            return self._call_neighbors(self._make_visible, x, y, level=1) or False
+            return self._call_neighbors(self._make_visible, x, y, check_searched=True, level=1) or False
         elif level == 1 and self._visible[x, y] in {self._MARK_HIDDEN, self._MARK_QUESTION_MARK}:
             self._visible[x, y] = self._MARK_VISIBLE
             return True
@@ -279,6 +286,7 @@ class Minesweeper:
             self._status = LOST
             self._moves += 1
         else:
+            self._already_searched = np.zeros(shape=(self.width, self.height))
             uncovered_square = self._make_visible(x, y)
             if uncovered_square:
                 self._moves += 1

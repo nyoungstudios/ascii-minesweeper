@@ -316,13 +316,25 @@ class PlayMinesweeper:
                 self._custom_pos += 1
             elif key == Keys.ENTER:
                 if self._custom_pos == 3:
+                    # enforces limits to not break the program
                     mines = get_count('mines')
                     height = get_count('height')
                     width = get_count('width')
-                    # a board with 80% mines
-                    max_mines = int(height * width * 0.8)
-                    if mines >= max_mines:
+                    size = height * width
+                    if size >= 2500:
+                        set_attr_count('height', 50)
+                        set_attr_count('width', 50)
+                        set_attr_count('mines', 500)
+                        return self._break()
+
+                    # sets a minimum mine percentage to 10% (so no stackoverflow errors as well)
+                    min_mines = int(size * 0.1)
+                    # sets a maximum mine percentage to 80% (which is basically impossible)
+                    max_mines = int(size * 0.8)
+                    if max_mines < mines:
                         set_attr_count('mines', max_mines)
+                    elif mines < min_mines:
+                        set_attr_count('mines', min_mines)
                     return self._break()
                 else:
                     return
@@ -338,6 +350,8 @@ class PlayMinesweeper:
                     if old_count == new_count:
                         return
                     set_attr_count(name, new_count)
+            elif self._custom_pos == self._CUSTOM_PARAMS_LENGTH - 1 and key == Keys.BACKSPACE:
+                return self._break()
 
             # no need to clear the initial label
             clear_last_lines(self._CUSTOM_PARAMS_HEIGHT - 2)
