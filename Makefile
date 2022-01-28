@@ -26,3 +26,6 @@ run:
 
 install:
 	@python setup.py install
+
+dev:
+	@pip install -e .

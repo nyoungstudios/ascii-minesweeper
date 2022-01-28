@@ -1,4 +1,8 @@
 # ASCII Minesweeper
+[![Gitpod ready](https://img.shields.io/badge/Gitpod-ready-blue?logo=gitpod)](https://gitpod.io/#https://github.com/nyoungstudios/ascii-minesweeper)
+[![PyPI version shields.io](https://img.shields.io/pypi/v/ascii-minesweeper.svg)](https://pypi.python.org/project/ascii-minesweeper/)
+[![PyPI license](https://img.shields.io/pypi/l/ascii-minesweeper.svg)](https://pypi.python.org/project/ascii-minesweeper/)
+
 Inspired by a minesweeper game on my graphing calculator, I decided to create this version that you can play directly in your terminal. I originally started this project as an Easter egg project to embed into another Python script. This implementation is written in Python and uses `numpy` under the hood. While it is called `ascii-minesweeper`, it actually does use a few characters not in the ASCII character set. Hope you enjoy playing!
 
 ## Screenshot
