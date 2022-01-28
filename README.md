@@ -32,3 +32,8 @@ play.launch_game()
 * Space - Mark a square as a flag, question mark, or back to hidden
 * Enter - Select a square to uncover
 * Backspace or CTRL-C - Returns to main menu
+
+## Play in your web browser
+Click this link below to open the code in Gitpod and sign in with your GitHub account.
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/nyoungstudios/ascii-minesweeper)
