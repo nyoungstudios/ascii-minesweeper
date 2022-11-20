@@ -1,4 +1,8 @@
 """
 Minesweeper
 """
-__version__ = "1.0.0"
+from minesweeper.play import Minesweeper, PlayMinesweeper
+from minesweeper.version import __version__
+
+
+__all__ = ['__version__', 'Minesweeper', 'PlayMinesweeper']

@@ -5,6 +5,7 @@ help:
 	@echo 'clean-all - Removes all Python cache, temporary files, and build folders'
 	@echo 'clean-build - Removes Python build folders'
 	@echo 'install - Installs this Python package'
+	@echo 'dev - Installs this Python package in editable mode'
 
 clean: clean-pyc
 

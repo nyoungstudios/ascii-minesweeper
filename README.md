@@ -22,7 +22,7 @@ minesweeper
 
 Otherwise, you can also launch the program from another Python script as an Easter egg like this:
 ```python
-from minesweeper.play import PlayMinesweeper
+from minesweeper import PlayMinesweeper
 play = PlayMinesweeper()
 play.launch_game()
 ```

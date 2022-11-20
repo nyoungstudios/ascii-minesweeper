@@ -306,7 +306,6 @@ class PlayMinesweeper:
 
                 str_to_write += '\n'
 
-
             print(str_to_write)
 
         def control_map(key):
@@ -489,7 +488,7 @@ class PlayMinesweeper:
 
         def cursor_reset_original():
             """
-            Moves cursor it's original location after refreshing the board or the top left of the board on start
+            Moves cursor its original location after refreshing the board or the top left of the board on start
             """
             cursor_right(game.indent + (self._x * 2))
             cursor_up(game.height - self._y + 2)
@@ -502,7 +501,7 @@ class PlayMinesweeper:
             """
             moves_str = str(game.moves)
             moves_ch_len = len(moves_str)
-            header_str = 'Moves: {}'.format(game.moves) + ' ' * (11 - moves_ch_len)  + \
+            header_str = 'Moves: {}'.format(game.moves) + ' ' * (11 - moves_ch_len) + \
                          'Mines: {}/{}'.format(game.mines, opts['mines'])
             if not self._game_header_indent:
                 self._game_header_indent = ' ' * (self._center - len(header_str) // 2)
@@ -590,6 +589,7 @@ class PlayMinesweeper:
 def main():
     play = PlayMinesweeper()
     play.launch_game()
-    
+
+
 if __name__ == '__main__':
     main()

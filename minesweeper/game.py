@@ -167,7 +167,7 @@ class Minesweeper:
             than calling the function again
         :param args: args
         :param kwargs: kwargs
-        :return: the logical or of all of the return values from the functions called
+        :return: the logical or of all the return values from the functions called
         """
         out = None
         for i, j in self._OFFSETS:
@@ -269,7 +269,7 @@ class Minesweeper:
     def uncover_square(self, x, y):
         """
         Uncover a square. And recursively uncover adjacent squares. Game over if you uncovered a mine, game won if you
-        uncovered all of the safe squares, and game continues otherwise
+        uncovered all the safe squares, and game continues otherwise
 
         :param x: x coordinate point
         :param y: y coordinate point
@@ -395,7 +395,7 @@ class Minesweeper:
 
     def create_show_all_board(self):
         """
-        Creates a formatted board with all of the numbers, mines, and blank squares visible.
+        Creates a formatted board with all the numbers, mines, and blank squares visible.
 
         :return: A string representing the board
         """
