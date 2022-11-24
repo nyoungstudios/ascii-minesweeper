@@ -5,9 +5,9 @@
 
 Inspired by a minesweeper game on my graphing calculator, I decided to create this version that you can play directly in your terminal. I originally started this project as an Easter egg project to embed into another Python script. This implementation is written in Python and uses `numpy` under the hood. While it is called `ascii-minesweeper`, it actually does use a few characters not in the ASCII character set. Hope you enjoy playing!
 
-## Screenshot
-![ascii minesweeper screenshot](https://github.com/nyoungstudios/ascii-minesweeper/blob/main/images/homescreen.png?raw=true)
-<!-- ![ascii minesweeper screenshot](images/homescreen.png) -->
+## Gameplay
+![ascii minesweeper screenshot](https://github.com/nyoungstudios/ascii-minesweeper/blob/main/images/MinesweeperGamePlay480.gif?raw=true)
+<!-- ![ascii minesweeper screenshot](images/MinesweeperGamePlay480.gif) -->
 
 ## Install
 ```shell
